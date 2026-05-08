@@ -1,4 +1,4 @@
-using YourProjectName.Data;
+using OrganizacnaStrukturaFirmy.Data;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 

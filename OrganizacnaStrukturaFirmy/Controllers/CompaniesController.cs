@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OrganizacnaStrukturaFirmy.Data;
 using OrganizacnaStrukturaFirmy.DTOs.Company;
-using YourProjectName.Data;
+using OrganizacnaStrukturaFirmy.DTOs.Employee;
 using OrganizacnaStrukturaFirmy.Models;
 
 
@@ -145,5 +146,29 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             return NoContent();
         }
 
+        // GET: api/companies/5/employees
+        [HttpGet("{id}/employees")]
+        public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetEmployees(int id)
+        {
+            var company = await _context.Companies.FindAsync(id);
+            if (company == null)
+                return NotFound($"Company with id {id} not found.");
+
+            var employees = await _context.Employees
+                .Where(e => e.CompanyId == id)
+                .ToListAsync();
+
+            return Ok(employees.Select(e => new EmployeeDto
+            {
+                Id = e.Id,
+                CompanyId = e.CompanyId,
+                DepartmentId = e.DepartmentId,
+                Title = e.Title,
+                FirstName = e.FirstName,
+                LastName = e.LastName,
+                Phone = e.Phone,
+                Email = e.Email
+            }));
+        }
     }
 }

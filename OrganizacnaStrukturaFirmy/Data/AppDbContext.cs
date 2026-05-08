@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OrganizacnaStrukturaFirmy.Models;
 
-namespace YourProjectName.Data;
+namespace OrganizacnaStrukturaFirmy.Data;
 
 public class AppDbContext : DbContext
 {
