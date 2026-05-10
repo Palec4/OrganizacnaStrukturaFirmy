@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using OrganizacnaStrukturaFirmy.Data;
 using OrganizacnaStrukturaFirmy.DTOs.Division;
+using OrganizacnaStrukturaFirmy.DTOs.Project;
 using OrganizacnaStrukturaFirmy.Models;
 
 namespace OrganizacnaStrukturaFirmy.Controllers
@@ -155,6 +156,28 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // GET: api/divisions/5/projects
+        [HttpGet("{id}/projects")]
+        public async Task<ActionResult<IEnumerable<ProjectDto>>> GetProjects(int id)
+        {
+            var division = await _context.Divisions.FindAsync(id);
+            if (division == null)
+                return NotFound($"Division with id {id} not found.");
+
+            var projects = await _context.Projects
+                .Where(p => p.DivisionId == id)
+                .ToListAsync();
+
+            return Ok(projects.Select(p => new ProjectDto
+            {
+                Id = p.Id,
+                Code = p.Code,
+                Name = p.Name,
+                DivisionId = p.DivisionId,
+                ManagerId = p.ManagerId
+            }));
         }
     }
 }
