@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using OrganizacnaStrukturaFirmy.Data;
 using OrganizacnaStrukturaFirmy.DTOs.Company;
+using OrganizacnaStrukturaFirmy.DTOs.Division;
 using OrganizacnaStrukturaFirmy.DTOs.Employee;
 using OrganizacnaStrukturaFirmy.Models;
 
@@ -168,6 +169,28 @@ namespace OrganizacnaStrukturaFirmy.Controllers
                 LastName = e.LastName,
                 Phone = e.Phone,
                 Email = e.Email
+            }));
+        }
+
+        // GET: api/companies/5/divisions
+        [HttpGet("{companyId}/divisions")]
+        public async Task<ActionResult<IEnumerable<DivisionDto>>> GetByCompany(int companyId)
+        {
+            var company = await _context.Companies.FindAsync(companyId);
+            if (company == null)
+                return NotFound($"Company with id {companyId} not found.");
+
+            var divisions = await _context.Divisions
+                .Where(d => d.CompanyId == companyId)
+                .ToListAsync();
+
+            return Ok(divisions.Select(d => new DivisionDto
+            {
+                Id = d.Id,
+                Code = d.Code,
+                Name = d.Name,
+                CompanyId = d.CompanyId,
+                ManagerId = d.ManagerId
             }));
         }
     }
