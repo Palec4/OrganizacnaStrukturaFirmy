@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OrganizacnaStrukturaFirmy.Data;
+using OrganizacnaStrukturaFirmy.DTOs.Department;
 using OrganizacnaStrukturaFirmy.DTOs.Project;
 using OrganizacnaStrukturaFirmy.Models;
 
@@ -157,6 +158,28 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // GET: api/projects/5/departments
+        [HttpGet("{id}/departments")]
+        public async Task<ActionResult<IEnumerable<DepartmentDto>>> GetDepartments(int id)
+        {
+            var project = await _context.Projects.FindAsync(id);
+            if (project == null)
+                return NotFound($"Project with id {id} not found.");
+
+            var departments = await _context.Departments
+                .Where(d => d.ProjectId == id)
+                .ToListAsync();
+
+            return Ok(departments.Select(d => new DepartmentDto
+            {
+                Id = d.Id,
+                Code = d.Code,
+                Name = d.Name,
+                ProjectId = d.ProjectId,
+                ManagerId = d.ManagerId
+            }));
         }
     }
 }
