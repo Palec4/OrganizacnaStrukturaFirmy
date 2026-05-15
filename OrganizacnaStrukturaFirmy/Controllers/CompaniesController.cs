@@ -5,6 +5,7 @@ using OrganizacnaStrukturaFirmy.DTOs.Company;
 using OrganizacnaStrukturaFirmy.DTOs.Division;
 using OrganizacnaStrukturaFirmy.DTOs.Employee;
 using OrganizacnaStrukturaFirmy.Models;
+using OrganizacnaStrukturaFirmy.Service.Interface;
 
 
 namespace OrganizacnaStrukturaFirmy.Controllers
@@ -13,138 +14,76 @@ namespace OrganizacnaStrukturaFirmy.Controllers
     [Route("api/[controller]")]
     public class CompaniesController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly ICompanyService _companyService;
 
-        public CompaniesController(AppDbContext context)
+        public CompaniesController(ICompanyService companyService)
         {
-            _context = context;
+            _companyService = companyService;
         }
 
         // GET: api/companies
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CompanyDto>>> GetAll()
         {
-            var companies = await _context.Companies
-                .Include(c => c.Manager)
-                .ToListAsync();
-
-            return Ok(companies.Select(c => new CompanyDto
-            {
-                Id = c.Id,
-                Code = c.Code,
-                Name = c.Name,
-                ManagerId = c.ManagerId
-            }));
+            var companies = await _companyService.GetAllAsync();
+            return Ok(companies);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<CompanyDto>> GetById(int id)
         {
-            var company = await _context.Companies
-             .Include(c => c.Manager)
-             .FirstOrDefaultAsync(c => c.Id == id);
+            var company = await _companyService.GetByIdAsync(id);
             if (company == null)
-            {
-                return NotFound($"Company with id {id} not found");
-            }
+                return NotFound($"Company with id {id} not found.");
 
-            return Ok(new CompanyDto
-            {
-                Id = company.Id,
-                Code = company.Code,
-                Name = company.Name,
-                ManagerId = company.ManagerId
-            });
+            return Ok(company);
         }
         // POST: api/companies
         [HttpPost]
         public async Task<ActionResult<CompanyDto>> Create(CreateCompanyDto dto) 
-        { 
-            if (string.IsNullOrWhiteSpace(dto.Code))
-                return BadRequest("Code is required.");
-            if (string.IsNullOrWhiteSpace(dto.Name))
-                return BadRequest("Name is required.");
-            if (await _context.Companies.AnyAsync(c => c.Code == dto.Code))
-                return BadRequest($"Company with code '{dto.Code}' already exists.");
-            if (dto.ManagerId.HasValue)
-            { 
-                var manager = await _context.Employees.FindAsync(dto.ManagerId.Value);
-                if (manager == null)
-                    return BadRequest($"Employee with id {dto.ManagerId.Value} not found.");
+        {
+            try
+            {
+                var company = await _companyService.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = company.Id }, company);
             }
-
-            var company = new Company
+            catch (ArgumentException ex)
             {
-                Code = dto.Code,
-                Name = dto.Name,
-                ManagerId = dto.ManagerId
-            };
-
-            _context.Companies.Add(company);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = company.Id }, new CompanyDto
-            {
-                Id = company.Id,
-                Code = company.Code,
-                Name = company.Name,
-                ManagerId = company.ManagerId
-            });
+                return BadRequest(ex.Message);
+            }
         }
         // PUT: api/companies/5
         [HttpPut("{id}")]
         public async Task<ActionResult<CompanyDto>> Update(int id, UpdateCompanyDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Code))
-                return BadRequest("Code is required.");
-
-            if (string.IsNullOrWhiteSpace(dto.Name))
-                return BadRequest("Name is required.");
-
-            if (!dto.ManagerId.HasValue)
-                return BadRequest("ManagerId is required when updating a company.");
-
-            var company = await _context.Companies.FindAsync(id);
-            if (company == null)
-                return NotFound($"Company with id {id} not found.");
-
-            if (await _context.Companies.AnyAsync(c => c.Code == dto.Code && c.Id != id))
-                return BadRequest($"Company with code '{dto.Code}' already exists.");
-
-            var manager = await _context.Employees.FindAsync(dto.ManagerId.Value);
-            if (manager == null)
-                return BadRequest($"Employee with id {dto.ManagerId} not found.");
-
-            if (manager.CompanyId != id)
-                return BadRequest("Manager must be an employee of this company.");
-
-            company.Code = dto.Code;
-            company.Name = dto.Name;
-            company.ManagerId = dto.ManagerId;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new CompanyDto
+            try
             {
-                Id = company.Id,
-                Code = company.Code,
-                Name = company.Name,
-                ManagerId = company.ManagerId
-            });
+                var company = await _companyService.UpdateAsync(id, dto);
+                return Ok(company);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         // DELETE: api/companies/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var company = await _context.Companies.FindAsync(id);
-            if (company == null)
-                return NotFound($"Company with id {id} not found.");
-
-            _context.Companies.Remove(company);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            try
+            {
+                await _companyService.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         // GET: api/companies/5/employees
