@@ -10,6 +10,5 @@
 
         public Project? Project { get; set; }
         public Employee? Manager { get; set; }
-        public ICollection<Employee> Employees { get; set; } = new List<Employee>();
     }
 }

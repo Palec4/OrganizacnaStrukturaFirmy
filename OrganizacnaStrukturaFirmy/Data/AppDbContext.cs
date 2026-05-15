@@ -70,12 +70,5 @@ public class AppDbContext : DbContext
             .WithMany(c => c.Employees)
             .HasForeignKey(e => e.CompanyId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        // Employee -> Department
-        modelBuilder.Entity<Employee>()
-            .HasOne(e => e.Department)
-            .WithMany(d => d.Employees)
-            .HasForeignKey(e => e.DepartmentId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

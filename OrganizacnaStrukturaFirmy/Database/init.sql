@@ -4,7 +4,6 @@ GO
 CREATE TABLE Employees (
     Id          INT PRIMARY KEY IDENTITY(1,1),
     CompanyId   INT NOT NULL,
-    DepartmentId INT NULL,
     Title       NVARCHAR(50) NULL,
     FirstName   NVARCHAR(100) NOT NULL,
     LastName    NVARCHAR(100) NOT NULL,
@@ -51,9 +50,7 @@ GO
 -- Foreign keys
 ALTER TABLE Employees
     ADD CONSTRAINT FK_Employees_Company 
-        FOREIGN KEY (CompanyId) REFERENCES Companies(Id),
-        CONSTRAINT FK_Employees_Department 
-        FOREIGN KEY (DepartmentId) REFERENCES Departments(Id);
+        FOREIGN KEY (CompanyId) REFERENCES Companies(Id);
 
 ALTER TABLE Companies
     ADD CONSTRAINT FK_Companies_Manager 

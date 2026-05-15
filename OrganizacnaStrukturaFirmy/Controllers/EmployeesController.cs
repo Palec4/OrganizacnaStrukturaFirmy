@@ -28,7 +28,6 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             {
                 Id = e.Id,
                 CompanyId = e.CompanyId,
-                DepartmentId = e.DepartmentId,
                 Title = e.Title,
                 FirstName = e.FirstName,
                 LastName = e.LastName,
@@ -50,7 +49,6 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             {
                 Id = employee.Id,
                 CompanyId = employee.CompanyId,
-                DepartmentId = employee.DepartmentId,
                 Title = employee.Title,
                 FirstName = employee.FirstName,
                 LastName = employee.LastName,
@@ -79,17 +77,9 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             if (company == null)
                 return BadRequest($"Company with id {dto.CompanyId} not found.");
 
-            if (dto.DepartmentId.HasValue)
-            {
-                var department = await _context.Departments.FindAsync(dto.DepartmentId.Value);
-                if (department == null)
-                    return BadRequest($"Department with id {dto.DepartmentId} not found.");
-            }
-
             var employee = new Employee
             {
                 CompanyId = dto.CompanyId,
-                DepartmentId = dto.DepartmentId,
                 Title = dto.Title,
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
@@ -104,7 +94,6 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             {
                 Id = employee.Id,
                 CompanyId = employee.CompanyId,
-                DepartmentId = employee.DepartmentId,
                 Title = employee.Title,
                 FirstName = employee.FirstName,
                 LastName = employee.LastName,
@@ -133,14 +122,6 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             if (employee == null)
                 return NotFound($"Employee with id {id} not found.");
 
-            if (dto.DepartmentId.HasValue)
-            {
-                var department = await _context.Departments.FindAsync(dto.DepartmentId.Value);
-                if (department == null)
-                    return BadRequest($"Department with id {dto.DepartmentId} not found.");
-            }
-
-            employee.DepartmentId = dto.DepartmentId;
             employee.Title = dto.Title;
             employee.FirstName = dto.FirstName;
             employee.LastName = dto.LastName;
@@ -153,7 +134,6 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             {
                 Id = employee.Id,
                 CompanyId = employee.CompanyId,
-                DepartmentId = employee.DepartmentId,
                 Title = employee.Title,
                 FirstName = employee.FirstName,
                 LastName = employee.LastName,

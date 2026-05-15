@@ -163,7 +163,6 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             {
                 Id = e.Id,
                 CompanyId = e.CompanyId,
-                DepartmentId = e.DepartmentId,
                 Title = e.Title,
                 FirstName = e.FirstName,
                 LastName = e.LastName,
