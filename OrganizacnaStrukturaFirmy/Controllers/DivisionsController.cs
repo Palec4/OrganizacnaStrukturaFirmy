@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using OrganizacnaStrukturaFirmy.Data;
 using OrganizacnaStrukturaFirmy.DTOs.Division;
 using OrganizacnaStrukturaFirmy.DTOs.Project;
-using OrganizacnaStrukturaFirmy.Models;
+using OrganizacnaStrukturaFirmy.Service.implementation;
 using OrganizacnaStrukturaFirmy.Service.Interface;
 
 namespace OrganizacnaStrukturaFirmy.Controllers
@@ -13,10 +11,12 @@ namespace OrganizacnaStrukturaFirmy.Controllers
     public class DivisionsController : ControllerBase
     {
         private readonly IDivisionService _divisionService;
+        private readonly IProjectService _projectService;
 
-        public DivisionsController(IDivisionService divisionService)
+        public DivisionsController(IDivisionService divisionService, IProjectService projectService)
         {
             _divisionService = divisionService;
+            _projectService = projectService;
         }
 
         // GET: api/divisions
@@ -91,26 +91,16 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             }
         }
 
-        //// GET: api/divisions/5/projects
-        //[HttpGet("{id}/projects")]
-        //public async Task<ActionResult<IEnumerable<ProjectDto>>> GetProjects(int id)
-        //{
-        //    var division = await _context.Divisions.FindAsync(id);
-        //    if (division == null)
-        //        return NotFound($"Division with id {id} not found.");
+        // GET: api/divisions/5/projects
+        [HttpGet("{id}/projects")]
+        public async Task<ActionResult<IEnumerable<ProjectDto>>> GetProjects(int id)
+        {
+            var division = await _divisionService.GetByIdAsync(id);
+            if (division == null)
+                return NotFound($"Division with id {id} not found.");
 
-        //    var projects = await _context.Projects
-        //        .Where(p => p.DivisionId == id)
-        //        .ToListAsync();
-
-        //    return Ok(projects.Select(p => new ProjectDto
-        //    {
-        //        Id = p.Id,
-        //        Code = p.Code,
-        //        Name = p.Name,
-        //        DivisionId = p.DivisionId,
-        //        ManagerId = p.ManagerId
-        //    }));
-        //}
+            var projects = await _projectService.GetByDivisionAsync(id);
+            return Ok(projects);
+        }
     }
 }

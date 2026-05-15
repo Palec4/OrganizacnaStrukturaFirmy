@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using OrganizacnaStrukturaFirmy.Data;
 using OrganizacnaStrukturaFirmy.DTOs.Employee;
-using OrganizacnaStrukturaFirmy.Models;
 using OrganizacnaStrukturaFirmy.Service.Interface;
 
 

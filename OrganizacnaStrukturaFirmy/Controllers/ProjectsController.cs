@@ -1,9 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using OrganizacnaStrukturaFirmy.Data;
 using OrganizacnaStrukturaFirmy.DTOs.Department;
 using OrganizacnaStrukturaFirmy.DTOs.Project;
-using OrganizacnaStrukturaFirmy.Models;
 using OrganizacnaStrukturaFirmy.Service.Interface;
 
 namespace OrganizacnaStrukturaFirmy.Controllers
@@ -13,10 +10,12 @@ namespace OrganizacnaStrukturaFirmy.Controllers
     public class ProjectsController : Controller
     {
         private readonly IProjectService _projectService;
+        private readonly IDepartmentService _departmentService;
 
-        public ProjectsController(IProjectService projectService)
+        public ProjectsController(IProjectService projectService, IDepartmentService departmentService)
         {
             _projectService = projectService;
+            _departmentService = departmentService;
         }
 
 
@@ -92,26 +91,16 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             }
         }
 
-        //// GET: api/projects/5/departments
-        //[HttpGet("{id}/departments")]
-        //public async Task<ActionResult<IEnumerable<DepartmentDto>>> GetDepartments(int id)
-        //{
-        //    var project = await _context.Projects.FindAsync(id);
-        //    if (project == null)
-        //        return NotFound($"Project with id {id} not found.");
+        // GET: api/projects/5/departments
+        [HttpGet("{id}/departments")]
+        public async Task<ActionResult<IEnumerable<DepartmentDto>>> GetDepartments(int id)
+        {
+            var project = await _projectService.GetByIdAsync(id);
+            if (project == null)
+                return NotFound($"Project with id {id} not found.");
 
-        //    var departments = await _context.Departments
-        //        .Where(d => d.ProjectId == id)
-        //        .ToListAsync();
-
-        //    return Ok(departments.Select(d => new DepartmentDto
-        //    {
-        //        Id = d.Id,
-        //        Code = d.Code,
-        //        Name = d.Name,
-        //        ProjectId = d.ProjectId,
-        //        ManagerId = d.ManagerId
-        //    }));
-        //}
+            var departments = await _departmentService.GetByProjectAsync(id);
+            return Ok(departments);
+        }
     }
 }

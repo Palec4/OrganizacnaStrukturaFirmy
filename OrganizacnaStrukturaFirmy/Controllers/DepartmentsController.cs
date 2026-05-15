@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using OrganizacnaStrukturaFirmy.Data;
 using OrganizacnaStrukturaFirmy.DTOs.Department;
-using OrganizacnaStrukturaFirmy.Models;
+using OrganizacnaStrukturaFirmy.Service.Interface;
 
 namespace OrganizacnaStrukturaFirmy.Controllers
 {
@@ -10,155 +8,79 @@ namespace OrganizacnaStrukturaFirmy.Controllers
     [Route("api/[controller]")]
     public class DepartmentsController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IDepartmentService _departmentService;
 
-        public DepartmentsController(AppDbContext context)
+        public DepartmentsController(IDepartmentService departmentService)
         {
-            _context = context;
+            _departmentService = departmentService;
         }
 
         // GET: api/departments
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DepartmentDto>>> GetAll()
         {
-            var departments = await _context.Departments.ToListAsync();
-
-            return Ok(departments.Select(d => new DepartmentDto
-            {
-                Id = d.Id,
-                Code = d.Code,
-                Name = d.Name,
-                ProjectId = d.ProjectId,
-                ManagerId = d.ManagerId
-            }));
+            var departments = await _departmentService.GetAllAsync();
+            return Ok(departments);
         }
 
         // GET: api/departments/5
         [HttpGet("{id}")]
         public async Task<ActionResult<DepartmentDto>> GetById(int id)
         {
-            var department = await _context.Departments.FindAsync(id);
-
+            var department = await _departmentService.GetByIdAsync(id);
             if (department == null)
                 return NotFound($"Department with id {id} not found.");
 
-            return Ok(new DepartmentDto
-            {
-                Id = department.Id,
-                Code = department.Code,
-                Name = department.Name,
-                ProjectId = department.ProjectId,
-                ManagerId = department.ManagerId
-            });
+            return Ok(department);
         }
 
         // POST: api/departments
         [HttpPost]
         public async Task<ActionResult<DepartmentDto>> Create(CreateDepartmentDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Code))
-                return BadRequest("Code is required.");
-
-            if (string.IsNullOrWhiteSpace(dto.Name))
-                return BadRequest("Name is required.");
-
-            var project = await _context.Projects.FindAsync(dto.ProjectId);
-            if (project == null)
-                return BadRequest($"Project with id {dto.ProjectId} not found.");
-
-            if (await _context.Departments.AnyAsync(d => d.Code == dto.Code))
-                return BadRequest($"Department with code '{dto.Code}' already exists.");
-
-            if (dto.ManagerId.HasValue)
+            try
             {
-                var manager = await _context.Employees.FindAsync(dto.ManagerId.Value);
-                if (manager == null)
-                    return BadRequest($"Employee with id {dto.ManagerId} not found.");
-
-                var division = await _context.Divisions.FindAsync(project.DivisionId);
-                if (manager.CompanyId != division!.CompanyId)
-                    return BadRequest("Manager must be an employee of the company.");
+                var department = await _departmentService.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = department.Id }, department);
             }
-
-            var department = new Department
+            catch (ArgumentException ex)
             {
-                Code = dto.Code,
-                Name = dto.Name,
-                ProjectId = dto.ProjectId,
-                ManagerId = dto.ManagerId
-            };
-
-            _context.Departments.Add(department);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = department.Id }, new DepartmentDto
-            {
-                Id = department.Id,
-                Code = department.Code,
-                Name = department.Name,
-                ProjectId = department.ProjectId,
-                ManagerId = department.ManagerId
-            });
+                return BadRequest(ex.Message);
+            }
         }
 
         // PUT: api/departments/5
         [HttpPut("{id}")]
         public async Task<ActionResult<DepartmentDto>> Update(int id, UpdateDepartmentDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Code))
-                return BadRequest("Code is required.");
-
-            if (string.IsNullOrWhiteSpace(dto.Name))
-                return BadRequest("Name is required.");
-
-            if (!dto.ManagerId.HasValue)
-                return BadRequest("ManagerId is required when updating a department.");
-
-            var department = await _context.Departments.FindAsync(id);
-            if (department == null)
-                return NotFound($"Department with id {id} not found.");
-
-            if (await _context.Departments.AnyAsync(d => d.Code == dto.Code && d.Id != id))
-                return BadRequest($"Department with code '{dto.Code}' already exists.");
-
-            var project = await _context.Projects.FindAsync(department.ProjectId);
-            var division = await _context.Divisions.FindAsync(project!.DivisionId);
-
-            var manager = await _context.Employees.FindAsync(dto.ManagerId.Value);
-            if (manager == null)
-                return BadRequest($"Employee with id {dto.ManagerId} not found.");
-
-            if (manager.CompanyId != division!.CompanyId)
-                return BadRequest("Manager must be an employee of the company.");
-
-            department.Code = dto.Code;
-            department.Name = dto.Name;
-            department.ManagerId = dto.ManagerId;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new DepartmentDto
+            try
             {
-                Id = department.Id,
-                Code = department.Code,
-                Name = department.Name,
-                ProjectId = department.ProjectId,
-                ManagerId = department.ManagerId
-            });
+                var department = await _departmentService.UpdateAsync(id, dto);
+                return Ok(department);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         // DELETE: api/departments/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var department = await _context.Departments.FindAsync(id);
-            if (department == null)
-                return NotFound($"Department with id {id} not found.");
-
-            _context.Departments.Remove(department);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            try
+            {
+                await _departmentService.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }
