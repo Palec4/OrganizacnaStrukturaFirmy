@@ -86,50 +86,50 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             }
         }
 
-        // GET: api/companies/5/employees
-        [HttpGet("{id}/employees")]
-        public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetEmployees(int id)
-        {
-            var company = await _context.Companies.FindAsync(id);
-            if (company == null)
-                return NotFound($"Company with id {id} not found.");
+        //// GET: api/companies/5/employees
+        //[HttpGet("{id}/employees")]
+        //public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetEmployees(int id)
+        //{
+        //    var company = await _context.Companies.FindAsync(id);
+        //    if (company == null)
+        //        return NotFound($"Company with id {id} not found.");
 
-            var employees = await _context.Employees
-                .Where(e => e.CompanyId == id)
-                .ToListAsync();
+        //    var employees = await _context.Employees
+        //        .Where(e => e.CompanyId == id)
+        //        .ToListAsync();
 
-            return Ok(employees.Select(e => new EmployeeDto
-            {
-                Id = e.Id,
-                CompanyId = e.CompanyId,
-                Title = e.Title,
-                FirstName = e.FirstName,
-                LastName = e.LastName,
-                Phone = e.Phone,
-                Email = e.Email
-            }));
-        }
+        //    return Ok(employees.Select(e => new EmployeeDto
+        //    {
+        //        Id = e.Id,
+        //        CompanyId = e.CompanyId,
+        //        Title = e.Title,
+        //        FirstName = e.FirstName,
+        //        LastName = e.LastName,
+        //        Phone = e.Phone,
+        //        Email = e.Email
+        //    }));
+        //}
 
-        // GET: api/companies/5/divisions
-        [HttpGet("{companyId}/divisions")]
-        public async Task<ActionResult<IEnumerable<DivisionDto>>> GetByCompany(int companyId)
-        {
-            var company = await _context.Companies.FindAsync(companyId);
-            if (company == null)
-                return NotFound($"Company with id {companyId} not found.");
+        //// GET: api/companies/5/divisions
+        //[HttpGet("{companyId}/divisions")]
+        //public async Task<ActionResult<IEnumerable<DivisionDto>>> GetByCompany(int companyId)
+        //{
+        //    var company = await _context.Companies.FindAsync(companyId);
+        //    if (company == null)
+        //        return NotFound($"Company with id {companyId} not found.");
 
-            var divisions = await _context.Divisions
-                .Where(d => d.CompanyId == companyId)
-                .ToListAsync();
+        //    var divisions = await _context.Divisions
+        //        .Where(d => d.CompanyId == companyId)
+        //        .ToListAsync();
 
-            return Ok(divisions.Select(d => new DivisionDto
-            {
-                Id = d.Id,
-                Code = d.Code,
-                Name = d.Name,
-                CompanyId = d.CompanyId,
-                ManagerId = d.ManagerId
-            }));
-        }
+        //    return Ok(divisions.Select(d => new DivisionDto
+        //    {
+        //        Id = d.Id,
+        //        Code = d.Code,
+        //        Name = d.Name,
+        //        CompanyId = d.CompanyId,
+        //        ManagerId = d.ManagerId
+        //    }));
+        //}
     }
 }
