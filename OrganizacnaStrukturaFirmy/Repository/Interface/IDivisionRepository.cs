@@ -11,5 +11,6 @@ namespace OrganizacnaStrukturaFirmy.Repository.Interface
         Task<Division> CreateAsync(Division division);
         Task<Division> UpdateAsync(Division division);
         Task DeleteAsync(Division division);
+        Task<bool> HasProjectsAsync(int divisionId);
     }
 }

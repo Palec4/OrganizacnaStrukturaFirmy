@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OrganizacnaStrukturaFirmy.Data;
 using OrganizacnaStrukturaFirmy.Models;
+using OrganizacnaStrukturaFirmy.Repository.Interface;
 
 namespace OrganizacnaStrukturaFirmy.Repository.Implementation
 {
-    public class DivisionRepository
+    public class DivisionRepository : IDivisionRepository
     {
         private readonly AppDbContext _context;
 
@@ -43,5 +44,7 @@ namespace OrganizacnaStrukturaFirmy.Repository.Implementation
             _context.Divisions.Remove(division);
             await _context.SaveChangesAsync();
         }
+        public async Task<bool> HasProjectsAsync(int divisionId)
+            => await _context.Projects.AnyAsync(p => p.DivisionId == divisionId);
     }
 }

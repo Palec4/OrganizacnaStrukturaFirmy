@@ -4,6 +4,7 @@ using OrganizacnaStrukturaFirmy.Data;
 using OrganizacnaStrukturaFirmy.DTOs.Division;
 using OrganizacnaStrukturaFirmy.DTOs.Project;
 using OrganizacnaStrukturaFirmy.Models;
+using OrganizacnaStrukturaFirmy.Service.Interface;
 
 namespace OrganizacnaStrukturaFirmy.Controllers
 {
@@ -11,173 +12,105 @@ namespace OrganizacnaStrukturaFirmy.Controllers
     [Route("api/[controller]")]
     public class DivisionsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IDivisionService _divisionService;
 
-        public DivisionsController(AppDbContext context)
+        public DivisionsController(IDivisionService divisionService)
         {
-            _context = context;
+            _divisionService = divisionService;
         }
 
         // GET: api/divisions
         [HttpGet]
         public async Task<ActionResult<IEnumerable<DivisionDto>>> GetAll()
         {
-            var divisions = await _context.Divisions.ToListAsync();
-
-            return Ok(divisions.Select(d => new DivisionDto
-            {
-                Id = d.Id,
-                Code = d.Code,
-                Name = d.Name,
-                CompanyId = d.CompanyId,
-                ManagerId = d.ManagerId
-            }));
+            var divisions = await _divisionService.GetAllAsync();
+            return Ok(divisions);
         }
 
         // GET: api/divisions/5
         [HttpGet("{id}")]
         public async Task<ActionResult<DivisionDto>> GetById(int id)
         {
-            var division = await _context.Divisions.FindAsync(id);
-
+            var division = await _divisionService.GetByIdAsync(id);
             if (division == null)
                 return NotFound($"Division with id {id} not found.");
 
-            return Ok(new DivisionDto
-            {
-                Id = division.Id,
-                Code = division.Code,
-                Name = division.Name,
-                CompanyId = division.CompanyId,
-                ManagerId = division.ManagerId
-            });
+            return Ok(division);
         }
 
         // POST: api/divisions
         [HttpPost]
         public async Task<ActionResult<DivisionDto>> Create(CreateDivisionDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Code))
-                return BadRequest("Code is required.");
-
-            if (string.IsNullOrWhiteSpace(dto.Name))
-                return BadRequest("Name is required.");
-
-            var company = await _context.Companies.FindAsync(dto.CompanyId);
-            if (company == null)
-                return BadRequest($"Company with id {dto.CompanyId} not found.");
-
-            if (await _context.Divisions.AnyAsync(d => d.Code == dto.Code))
-                return BadRequest($"Division with code '{dto.Code}' already exists.");
-
-            if (dto.ManagerId.HasValue)
+            try
             {
-                var manager = await _context.Employees.FindAsync(dto.ManagerId.Value);
-                if (manager == null)
-                    return BadRequest($"Employee with id {dto.ManagerId} not found.");
-
-                if (manager.CompanyId != dto.CompanyId)
-                    return BadRequest("Manager must be an employee of this company.");
+                var division = await _divisionService.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = division.Id }, division);
             }
-
-            var division = new Division
+            catch (ArgumentException ex)
             {
-                Code = dto.Code,
-                Name = dto.Name,
-                CompanyId = dto.CompanyId,
-                ManagerId = dto.ManagerId
-            };
-
-            _context.Divisions.Add(division);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = division.Id }, new DivisionDto
-            {
-                Id = division.Id,
-                Code = division.Code,
-                Name = division.Name,
-                CompanyId = division.CompanyId,
-                ManagerId = division.ManagerId
-            });
+                return BadRequest(ex.Message);
+            }
         }
 
         // PUT: api/divisions/5
         [HttpPut("{id}")]
         public async Task<ActionResult<DivisionDto>> Update(int id, UpdateDivisionDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Code))
-                return BadRequest("Code is required.");
-
-            if (string.IsNullOrWhiteSpace(dto.Name))
-                return BadRequest("Name is required.");
-
-            if (!dto.ManagerId.HasValue)
-                return BadRequest("ManagerId is required when updating a division.");
-
-            var division = await _context.Divisions.FindAsync(id);
-            if (division == null)
-                return NotFound($"Division with id {id} not found.");
-
-            if (await _context.Divisions.AnyAsync(d => d.Code == dto.Code && d.Id != id))
-                return BadRequest($"Division with code '{dto.Code}' already exists.");
-
-            var manager = await _context.Employees.FindAsync(dto.ManagerId.Value);
-            if (manager == null)
-                return BadRequest($"Employee with id {dto.ManagerId} not found.");
-
-            if (manager.CompanyId != division.CompanyId)
-                return BadRequest("Manager must be an employee of this company.");
-
-            division.Code = dto.Code;
-            division.Name = dto.Name;
-            division.ManagerId = dto.ManagerId;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new DivisionDto
+            try
             {
-                Id = division.Id,
-                Code = division.Code,
-                Name = division.Name,
-                CompanyId = division.CompanyId,
-                ManagerId = division.ManagerId
-            });
+                var division = await _divisionService.UpdateAsync(id, dto);
+                return Ok(division);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         // DELETE: api/divisions/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var division = await _context.Divisions.FindAsync(id);
-            if (division == null)
-                return NotFound($"Division with id {id} not found.");
-
-            _context.Divisions.Remove(division);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        // GET: api/divisions/5/projects
-        [HttpGet("{id}/projects")]
-        public async Task<ActionResult<IEnumerable<ProjectDto>>> GetProjects(int id)
-        {
-            var division = await _context.Divisions.FindAsync(id);
-            if (division == null)
-                return NotFound($"Division with id {id} not found.");
-
-            var projects = await _context.Projects
-                .Where(p => p.DivisionId == id)
-                .ToListAsync();
-
-            return Ok(projects.Select(p => new ProjectDto
+            try
             {
-                Id = p.Id,
-                Code = p.Code,
-                Name = p.Name,
-                DivisionId = p.DivisionId,
-                ManagerId = p.ManagerId
-            }));
+                await _divisionService.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
+
+        //// GET: api/divisions/5/projects
+        //[HttpGet("{id}/projects")]
+        //public async Task<ActionResult<IEnumerable<ProjectDto>>> GetProjects(int id)
+        //{
+        //    var division = await _context.Divisions.FindAsync(id);
+        //    if (division == null)
+        //        return NotFound($"Division with id {id} not found.");
+
+        //    var projects = await _context.Projects
+        //        .Where(p => p.DivisionId == id)
+        //        .ToListAsync();
+
+        //    return Ok(projects.Select(p => new ProjectDto
+        //    {
+        //        Id = p.Id,
+        //        Code = p.Code,
+        //        Name = p.Name,
+        //        DivisionId = p.DivisionId,
+        //        ManagerId = p.ManagerId
+        //    }));
+        //}
     }
 }
