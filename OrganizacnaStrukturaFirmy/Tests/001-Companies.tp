@@ -21,6 +21,8 @@ await tp.Test("Company should be created with generated id and correct values.",
     tp.SetVariable("CompanyId", (long)responseJson.id);
 });
 --- END
+
+
 --- TESTCASE Create employee for company
 --- HTTP
 ## TEST-EXPECT-STATUS: [201]
@@ -46,6 +48,8 @@ await tp.Test("Employee should be created.", async () =>
     tp.SetVariable("EmployeeId", (long)responseJson.id);
 });
 --- END
+
+
 --- TESTCASE Get all companies
 --- HTTP
 ## TEST-EXPECT-STATUS: [200]
@@ -60,6 +64,8 @@ await tp.Test("Companies response should not be empty.", async () =>
     True(responseText.Length > 2);
 });
 --- END
+
+
 --- TESTCASE Get company by id
 --- HTTP
 ## TEST-EXPECT-STATUS: [200]
@@ -74,6 +80,8 @@ await tp.Test("Returned company should match created company.", async () =>
     Equal((long)tp.GetVariable<long>("CompanyId"), (long)responseJson.id);
     Equal("Test Firma TeaPie", (string)responseJson.name);
 });
+
+
 --- END
 --- TESTCASE Update company
 --- HTTP
@@ -97,6 +105,8 @@ await tp.Test("Company should be updated.", async () =>
     Equal("KROS Software s.r.o.", (string)responseJson.name);
 });
 --- END
+
+
 --- TESTCASE Get updated company by id
 --- HTTP
 ## TEST-EXPECT-STATUS: [200]
@@ -112,6 +122,8 @@ await tp.Test("Returned company should contain updated values.", async () =>
     Equal("KROS Software s.r.o.", (string)responseJson.name);
 });
 --- END
+
+
 --- TESTCASE Get company employees
 --- HTTP
 ## TEST-EXPECT-STATUS: [200]
@@ -126,6 +138,8 @@ await tp.Test("Company employees should not be empty.", async () =>
     True(responseText.Length > 2);
 });
 --- END
+
+
 --- TESTCASE Create company without name should fail
 --- HTTP
 ## TEST-EXPECT-STATUS: [400]
@@ -138,12 +152,16 @@ Content-Type: application/json
   "name": ""
 }
 --- END
+
+
 --- TESTCASE Get non-existing company should return not found
 --- HTTP
 ## TEST-EXPECT-STATUS: [404]
 # @name GetNonExistingCompanyRequest
 GET {{ApiBaseUrl}}/api/companies/999999
 --- END
+
+
 --- TESTCASE Remove manager from company
 --- HTTP
 ## TEST-EXPECT-STATUS: [200]
@@ -157,18 +175,24 @@ Content-Type: application/json
   "managerId": null
 }
 --- END
+
+
 --- TESTCASE Delete employee
 --- HTTP
 ## TEST-EXPECT-STATUS: [204]
 # @name DeleteEmployeeRequest
 DELETE {{ApiBaseUrl}}/api/employees/{{EmployeeId}}
 --- END
+
+
 --- TESTCASE Delete company
 --- HTTP
 ## TEST-EXPECT-STATUS: [204]
 # @name DeleteCompanyRequest
 DELETE {{ApiBaseUrl}}/api/companies/{{CompanyId}}
 --- END
+
+
 --- TESTCASE Get deleted company should return not found
 --- HTTP
 ## TEST-EXPECT-STATUS: [404]

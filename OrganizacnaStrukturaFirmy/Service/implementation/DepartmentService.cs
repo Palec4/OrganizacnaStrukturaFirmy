@@ -10,12 +10,14 @@ namespace OrganizacnaStrukturaFirmy.Service.implementation
         private readonly IDepartmentRepository _departmentRepository;
         private readonly IProjectRepository _projectRepository;
         private readonly IEmployeeRepository _employeeRepository;
+        private readonly IDivisionRepository _divisionRepository;
 
-        public DepartmentService(IDepartmentRepository departmentRepository, IProjectRepository projectRepository, IEmployeeRepository employeeRepository)
+        public DepartmentService(IDepartmentRepository departmentRepository, IProjectRepository projectRepository, IEmployeeRepository employeeRepository, IDivisionRepository divisionRepository)
         {
             _departmentRepository = departmentRepository;
             _projectRepository = projectRepository;
             _employeeRepository = employeeRepository;
+            _divisionRepository = divisionRepository;
         }
 
         public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
@@ -90,12 +92,17 @@ namespace OrganizacnaStrukturaFirmy.Service.implementation
             if (await _departmentRepository.CodeExistsAsync(dto.Code, id))
                 throw new ArgumentException($"Department with code '{dto.Code}' already exists.");
 
-            var project = await _projectRepository.GetByIdAsync(department.ProjectId);
-            var division = await _projectRepository.GetByIdAsync(project!.DivisionId);
+            if (dto.ManagerId.HasValue)
+            {
+                var manager = await _employeeRepository.GetByIdAsync(dto.ManagerId.Value);
+                if (manager == null)
+                    throw new ArgumentException($"Employee with id {dto.ManagerId} not found.");
 
-            var manager = await _employeeRepository.GetByIdAsync(dto.ManagerId.Value);
-            if (manager == null)
-                throw new ArgumentException($"Employee with id {dto.ManagerId} not found.");
+                var project = await _projectRepository.GetByIdAsync(department.ProjectId);
+                var division = await _divisionRepository.GetByIdAsync(project!.DivisionId);
+                if (manager.CompanyId != division!.CompanyId)
+                    throw new ArgumentException("Manager must be an employee of the company.");
+            }
 
             department.Code = dto.Code;
             department.Name = dto.Name;

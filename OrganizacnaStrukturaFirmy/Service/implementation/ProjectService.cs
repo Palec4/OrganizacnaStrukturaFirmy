@@ -91,12 +91,15 @@ namespace OrganizacnaStrukturaFirmy.Service.implementation
 
             var division = await _divisionRepository.GetByIdAsync(project.DivisionId);
 
-            var manager = await _employeeRepository.GetByIdAsync(dto.ManagerId.Value);
-            if (manager == null)
-                throw new ArgumentException($"Employee with id {dto.ManagerId} not found.");
+            if (dto.ManagerId.HasValue)
+            {
+                var manager = await _employeeRepository.GetByIdAsync(dto.ManagerId.Value);
+                if (manager == null)
+                    throw new ArgumentException($"Employee with id {dto.ManagerId} not found.");
 
-            if (manager.CompanyId != division!.CompanyId)
-                throw new ArgumentException("Manager must be an employee of the company.");
+                if (manager.CompanyId != division!.CompanyId)
+                    throw new ArgumentException("Manager must be an employee of the company.");
+            }
 
             project.Code = dto.Code;
             project.Name = dto.Name;

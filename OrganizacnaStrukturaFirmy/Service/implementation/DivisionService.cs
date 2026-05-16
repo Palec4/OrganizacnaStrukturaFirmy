@@ -89,12 +89,15 @@ namespace OrganizacnaStrukturaFirmy.Service.implementation
             if (await _divisionRepository.CodeExistsAsync(dto.Code, id))
                 throw new ArgumentException($"Division with code '{dto.Code}' already exists.");
 
-            var manager = await _employeeRepository.GetByIdAsync(dto.ManagerId.Value);
-            if (manager == null)
-                throw new ArgumentException($"Employee with id {dto.ManagerId} not found.");
+            if (dto.ManagerId.HasValue)
+            {
+                var manager = await _employeeRepository.GetByIdAsync(dto.ManagerId.Value);
+                if (manager == null)
+                    throw new ArgumentException($"Employee with id {dto.ManagerId} not found.");
 
-            if (manager.CompanyId != division.CompanyId)
-                throw new ArgumentException("Manager must be an employee of this company.");
+                if (manager.CompanyId != division.CompanyId)
+                    throw new ArgumentException("Manager must be an employee of this company.");
+            }
 
             division.Code = dto.Code;
             division.Name = dto.Name;

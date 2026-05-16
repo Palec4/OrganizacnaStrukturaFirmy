@@ -1,0 +1,283 @@
+﻿--- TESTCASE Create company for department tests
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateCompanyRequest
+POST {{ApiBaseUrl}}/api/companies
+Content-Type: application/json
+
+{
+  "code": "FIRM-DEP-001",
+  "name": "Test Firma pre Oddelenia"
+}
+--- TEST
+await tp.Test("Company should be created.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateCompanyRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    tp.SetVariable("CompanyId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Create employee for department tests
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateEmployeeRequest
+POST {{ApiBaseUrl}}/api/employees
+Content-Type: application/json
+
+{
+  "companyId": {{CompanyId}},
+  "title": "Ing.",
+  "firstName": "Jan",
+  "lastName": "Novak",
+  "phone": "+421900123456",
+  "email": "jan.novak.dep@firma.sk"
+}
+--- TEST
+await tp.Test("Employee should be created.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateEmployeeRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    tp.SetVariable("EmployeeId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Create division for department tests
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateDivisionRequest
+POST {{ApiBaseUrl}}/api/divisions
+Content-Type: application/json
+
+{
+  "code": "DIV-DEP-001",
+  "name": "Test Divizia pre Oddelenia",
+  "companyId": {{CompanyId}}
+}
+--- TEST
+await tp.Test("Division should be created.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateDivisionRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    tp.SetVariable("DivisionId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Create project for department tests
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateProjectRequest
+POST {{ApiBaseUrl}}/api/projects
+Content-Type: application/json
+
+{
+  "code": "PROJ-DEP-001",
+  "name": "Test Projekt pre Oddelenia",
+  "divisionId": {{DivisionId}}
+}
+--- TEST
+await tp.Test("Project should be created.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateProjectRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    tp.SetVariable("ProjectId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Create department
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateDepartmentRequest
+POST {{ApiBaseUrl}}/api/departments
+Content-Type: application/json
+
+{
+  "code": "DEP-TEAPIE-001",
+  "name": "Test Oddelenie TeaPie",
+  "projectId": {{ProjectId}}
+}
+--- TEST
+await tp.Test("Department should be created with correct values.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateDepartmentRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    Equal("DEP-TEAPIE-001", (string)responseJson.code);
+    Equal("Test Oddelenie TeaPie", (string)responseJson.name);
+    tp.SetVariable("DepartmentId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Get all departments
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetAllDepartmentsRequest
+GET {{ApiBaseUrl}}/api/departments
+--- TEST
+await tp.Test("Departments response should not be empty.", async () =>
+{
+    var responseText = await tp.Responses["GetAllDepartmentsRequest"].Content.ReadAsStringAsync();
+    NotNull(responseText);
+    True(responseText.Length > 2);
+});
+--- END
+
+
+--- TESTCASE Get department by id
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetDepartmentByIdRequest
+GET {{ApiBaseUrl}}/api/departments/{{DepartmentId}}
+--- TEST
+await tp.Test("Returned department should match created department.", async () =>
+{
+    dynamic responseJson = await tp.Responses["GetDepartmentByIdRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    Equal((long)tp.GetVariable<long>("DepartmentId"), (long)responseJson.id);
+    Equal("Test Oddelenie TeaPie", (string)responseJson.name);
+});
+--- END
+
+
+--- TESTCASE Get project departments
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetProjectDepartmentsRequest
+GET {{ApiBaseUrl}}/api/projects/{{ProjectId}}/departments
+--- TEST
+await tp.Test("Project departments should not be empty.", async () =>
+{
+    var responseText = await tp.Responses["GetProjectDepartmentsRequest"].Content.ReadAsStringAsync();
+    NotNull(responseText);
+    True(responseText.Length > 2);
+});
+--- END
+
+
+--- TESTCASE Update department
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name UpdateDepartmentRequest
+PUT {{ApiBaseUrl}}/api/departments/{{DepartmentId}}
+Content-Type: application/json
+
+{
+  "code": "DEP-TEAPIE-001",
+  "name": "Test Oddelenie Zmenene",
+  "managerId": {{EmployeeId}}
+}
+--- TEST
+
+
+await tp.Test("Department should be updated.", async () =>
+{
+    dynamic responseJson = await tp.Responses["UpdateDepartmentRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    Equal((long)tp.GetVariable<long>("DepartmentId"), (long)responseJson.id);
+    Equal("Test Oddelenie Zmenene", (string)responseJson.name);
+});
+--- END
+
+
+--- TESTCASE Create department without code should fail
+--- HTTP
+## TEST-EXPECT-STATUS: [400]
+# @name CreateDepartmentWithoutCodeRequest
+POST {{ApiBaseUrl}}/api/departments
+Content-Type: application/json
+
+{
+  "code": "",
+  "name": "Test Oddelenie",
+  "projectId": {{ProjectId}}
+}
+--- END
+
+
+--- TESTCASE Get non-existing department should return not found
+--- HTTP
+## TEST-EXPECT-STATUS: [404]
+# @name GetNonExistingDepartmentRequest
+GET {{ApiBaseUrl}}/api/departments/999999
+--- END
+
+
+--- TESTCASE Remove manager from department
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+# @name RemoveDepartmentManagerRequest
+PUT {{ApiBaseUrl}}/api/departments/{{DepartmentId}}
+Content-Type: application/json
+
+{
+  "code": "DEP-TEAPIE-001",
+  "name": "Test Oddelenie Zmenene",
+  "managerId": null
+}
+--- END
+
+
+--- TESTCASE Delete department
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteDepartmentRequest
+DELETE {{ApiBaseUrl}}/api/departments/{{DepartmentId}}
+--- END
+
+
+--- TESTCASE Delete project
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteProjectRequest
+DELETE {{ApiBaseUrl}}/api/projects/{{ProjectId}}
+--- END
+
+
+--- TESTCASE Delete division
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteDivisionRequest
+DELETE {{ApiBaseUrl}}/api/divisions/{{DivisionId}}
+--- END
+
+
+--- TESTCASE Delete employee
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteEmployeeRequest
+DELETE {{ApiBaseUrl}}/api/employees/{{EmployeeId}}
+--- END
+
+
+--- TESTCASE Delete company
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteCompanyRequest
+DELETE {{ApiBaseUrl}}/api/companies/{{CompanyId}}
+--- END
+
+
+--- TESTCASE Get deleted department should return not found
+--- HTTP
+## TEST-EXPECT-STATUS: [404]
+# @name GetDeletedDepartmentRequest
+GET {{ApiBaseUrl}}/api/departments/{{DepartmentId}}
+--- END

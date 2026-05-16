@@ -1,0 +1,249 @@
+﻿--- TESTCASE Create company for project tests
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateCompanyRequest
+POST {{ApiBaseUrl}}/api/companies
+Content-Type: application/json
+
+{
+  "code": "FIRM-PROJ-001",
+  "name": "Test Firma pre Projekty"
+}
+--- TEST
+await tp.Test("Company should be created.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateCompanyRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    tp.SetVariable("CompanyId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Create employee for project tests
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateEmployeeRequest
+POST {{ApiBaseUrl}}/api/employees
+Content-Type: application/json
+
+{
+  "companyId": {{CompanyId}},
+  "title": "Ing.",
+  "firstName": "Jan",
+  "lastName": "Novak",
+  "phone": "+421900123456",
+  "email": "jan.novak.proj@firma.sk"
+}
+--- TEST
+await tp.Test("Employee should be created.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateEmployeeRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    tp.SetVariable("EmployeeId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Create division for project tests
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateDivisionRequest
+POST {{ApiBaseUrl}}/api/divisions
+Content-Type: application/json
+
+{
+  "code": "DIV-PROJ-001",
+  "name": "Test Divizia pre Projekty",
+  "companyId": {{CompanyId}}
+}
+--- TEST
+await tp.Test("Division should be created.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateDivisionRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    tp.SetVariable("DivisionId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Create project
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateProjectRequest
+POST {{ApiBaseUrl}}/api/projects
+Content-Type: application/json
+
+{
+  "code": "PROJ-TEAPIE-001",
+  "name": "Test Projekt TeaPie",
+  "divisionId": {{DivisionId}}
+}
+--- TEST
+await tp.Test("Project should be created with correct values.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateProjectRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    Equal("PROJ-TEAPIE-001", (string)responseJson.code);
+    Equal("Test Projekt TeaPie", (string)responseJson.name);
+    tp.SetVariable("ProjectId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Get all projects
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetAllProjectsRequest
+GET {{ApiBaseUrl}}/api/projects
+--- TEST
+await tp.Test("Projects response should not be empty.", async () =>
+{
+    var responseText = await tp.Responses["GetAllProjectsRequest"].Content.ReadAsStringAsync();
+    NotNull(responseText);
+    True(responseText.Length > 2);
+});
+--- END
+
+
+--- TESTCASE Get project by id
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetProjectByIdRequest
+GET {{ApiBaseUrl}}/api/projects/{{ProjectId}}
+--- TEST
+await tp.Test("Returned project should match created project.", async () =>
+{
+    dynamic responseJson = await tp.Responses["GetProjectByIdRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    Equal((long)tp.GetVariable<long>("ProjectId"), (long)responseJson.id);
+    Equal("Test Projekt TeaPie", (string)responseJson.name);
+});
+--- END
+
+
+--- TESTCASE Get division projects
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetDivisionProjectsRequest
+GET {{ApiBaseUrl}}/api/divisions/{{DivisionId}}/projects
+--- TEST
+await tp.Test("Division projects should not be empty.", async () =>
+{
+    var responseText = await tp.Responses["GetDivisionProjectsRequest"].Content.ReadAsStringAsync();
+    NotNull(responseText);
+    True(responseText.Length > 2);
+});
+--- END
+
+
+--- TESTCASE Update project
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name UpdateProjectRequest
+PUT {{ApiBaseUrl}}/api/projects/{{ProjectId}}
+Content-Type: application/json
+
+{
+  "code": "PROJ-TEAPIE-001",
+  "name": "Test Projekt Zmeneny",
+  "managerId": {{EmployeeId}}
+}
+--- TEST
+await tp.Test("Project should be updated.", async () =>
+{
+    dynamic responseJson = await tp.Responses["UpdateProjectRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    Equal((long)tp.GetVariable<long>("ProjectId"), (long)responseJson.id);
+    Equal("Test Projekt Zmeneny", (string)responseJson.name);
+});
+--- END
+
+
+--- TESTCASE Create project without code should fail
+--- HTTP
+## TEST-EXPECT-STATUS: [400]
+# @name CreateProjectWithoutCodeRequest
+POST {{ApiBaseUrl}}/api/projects
+Content-Type: application/json
+
+{
+  "code": "",
+  "name": "Test Projekt",
+  "divisionId": {{DivisionId}}
+}
+--- END
+
+
+--- TESTCASE Get non-existing project should return not found
+--- HTTP
+## TEST-EXPECT-STATUS: [404]
+# @name GetNonExistingProjectRequest
+GET {{ApiBaseUrl}}/api/projects/999999
+--- END
+
+
+--- TESTCASE Remove manager from project
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+# @name RemoveProjectManagerRequest
+PUT {{ApiBaseUrl}}/api/projects/{{ProjectId}}
+Content-Type: application/json
+
+{
+  "code": "PROJ-TEAPIE-001",
+  "name": "Test Projekt Zmeneny",
+  "managerId": null
+}
+--- END
+
+
+--- TESTCASE Delete project
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteProjectRequest
+DELETE {{ApiBaseUrl}}/api/projects/{{ProjectId}}
+--- END
+
+
+--- TESTCASE Delete division
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteDivisionRequest
+DELETE {{ApiBaseUrl}}/api/divisions/{{DivisionId}}
+--- END
+
+
+--- TESTCASE Delete employee
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteEmployeeRequest
+DELETE {{ApiBaseUrl}}/api/employees/{{EmployeeId}}
+--- END
+
+
+--- TESTCASE Delete company
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteCompanyRequest
+DELETE {{ApiBaseUrl}}/api/companies/{{CompanyId}}
+--- END
+
+
+--- TESTCASE Get deleted project should return not found
+--- HTTP
+## TEST-EXPECT-STATUS: [404]
+# @name GetDeletedProjectRequest
+GET {{ApiBaseUrl}}/api/projects/{{ProjectId}}
+--- END

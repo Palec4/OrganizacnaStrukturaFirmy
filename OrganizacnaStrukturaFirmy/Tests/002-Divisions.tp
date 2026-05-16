@@ -1,0 +1,217 @@
+﻿--- TESTCASE Create company for division tests
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateCompanyRequest
+POST {{ApiBaseUrl}}/api/companies
+Content-Type: application/json
+
+{
+  "code": "FIRM-DIV-001",
+  "name": "Test Firma pre Divizie"
+}
+--- TEST
+await tp.Test("Company should be created.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateCompanyRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    tp.SetVariable("CompanyId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Create employee for division tests
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateEmployeeRequest
+POST {{ApiBaseUrl}}/api/employees
+Content-Type: application/json
+
+{
+  "companyId": {{CompanyId}},
+  "title": "Ing.",
+  "firstName": "Jan",
+  "lastName": "Novak",
+  "phone": "+421900123456",
+  "email": "jan.novak.div@firma.sk"
+}
+--- TEST
+await tp.Test("Employee should be created.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateEmployeeRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    tp.SetVariable("EmployeeId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Create division
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateDivisionRequest
+POST {{ApiBaseUrl}}/api/divisions
+Content-Type: application/json
+
+{
+  "code": "DIV-TEAPIE-001",
+  "name": "Test Divizia TeaPie",
+  "companyId": {{CompanyId}}
+}
+--- TEST
+await tp.Test("Division should be created with correct values.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateDivisionRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    Equal("DIV-TEAPIE-001", (string)responseJson.code);
+    Equal("Test Divizia TeaPie", (string)responseJson.name);
+    tp.SetVariable("DivisionId", (long)responseJson.id);
+});
+--- END
+
+
+--- TESTCASE Get all divisions
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetAllDivisionsRequest
+GET {{ApiBaseUrl}}/api/divisions
+--- TEST
+await tp.Test("Divisions response should not be empty.", async () =>
+{
+    var responseText = await tp.Responses["GetAllDivisionsRequest"].Content.ReadAsStringAsync();
+    NotNull(responseText);
+    True(responseText.Length > 2);
+});
+--- END
+
+
+--- TESTCASE Get division by id
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetDivisionByIdRequest
+GET {{ApiBaseUrl}}/api/divisions/{{DivisionId}}
+--- TEST
+await tp.Test("Returned division should match created division.", async () =>
+{
+    dynamic responseJson = await tp.Responses["GetDivisionByIdRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    Equal((long)tp.GetVariable<long>("DivisionId"), (long)responseJson.id);
+    Equal("Test Divizia TeaPie", (string)responseJson.name);
+});
+--- END
+
+
+--- TESTCASE Get company divisions
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetCompanyDivisionsRequest
+GET {{ApiBaseUrl}}/api/companies/{{CompanyId}}/divisions
+--- TEST
+await tp.Test("Company divisions should not be empty.", async () =>
+{
+    var responseText = await tp.Responses["GetCompanyDivisionsRequest"].Content.ReadAsStringAsync();
+    NotNull(responseText);
+    True(responseText.Length > 2);
+});
+--- END
+
+
+--- TESTCASE Update division
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name UpdateDivisionRequest
+PUT {{ApiBaseUrl}}/api/divisions/{{DivisionId}}
+Content-Type: application/json
+
+{
+  "code": "DIV-TEAPIE-001",
+  "name": "Test Divizia Zmenena",
+  "managerId": {{EmployeeId}}
+}
+--- TEST
+await tp.Test("Division should be updated.", async () =>
+{
+    dynamic responseJson = await tp.Responses["UpdateDivisionRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    Equal((long)tp.GetVariable<long>("DivisionId"), (long)responseJson.id);
+    Equal("Test Divizia Zmenena", (string)responseJson.name);
+});
+--- END
+
+
+--- TESTCASE Create division without code should fail
+--- HTTP
+## TEST-EXPECT-STATUS: [400]
+# @name CreateDivisionWithoutCodeRequest
+POST {{ApiBaseUrl}}/api/divisions
+Content-Type: application/json
+
+{
+  "code": "",
+  "name": "Test Divizia",
+  "companyId": {{CompanyId}}
+}
+--- END
+
+
+--- TESTCASE Get non-existing division should return not found
+--- HTTP
+## TEST-EXPECT-STATUS: [404]
+# @name GetNonExistingDivisionRequest
+GET {{ApiBaseUrl}}/api/divisions/999999
+--- END
+
+
+--- TESTCASE Remove manager from division
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+# @name RemoveDivisionManagerRequest
+PUT {{ApiBaseUrl}}/api/divisions/{{DivisionId}}
+Content-Type: application/json
+
+{
+  "code": "DIV-TEAPIE-001",
+  "name": "Test Divizia Zmenena",
+  "managerId": null
+}
+--- END
+
+
+--- TESTCASE Delete division
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteDivisionRequest
+DELETE {{ApiBaseUrl}}/api/divisions/{{DivisionId}}
+--- END
+
+
+--- TESTCASE Delete employee
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteEmployeeRequest
+DELETE {{ApiBaseUrl}}/api/employees/{{EmployeeId}}
+--- END
+
+
+--- TESTCASE Delete company
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteCompanyRequest
+DELETE {{ApiBaseUrl}}/api/companies/{{CompanyId}}
+
+
+--- END
+--- TESTCASE Get deleted division should return not found
+--- HTTP
+## TEST-EXPECT-STATUS: [404]
+# @name GetDeletedDivisionRequest
+GET {{ApiBaseUrl}}/api/divisions/{{DivisionId}}
+--- END
