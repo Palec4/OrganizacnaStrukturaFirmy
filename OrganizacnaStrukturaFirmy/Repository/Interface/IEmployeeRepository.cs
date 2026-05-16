@@ -10,5 +10,6 @@ namespace OrganizacnaStrukturaFirmy.Repository.Interface
         Task<Employee> CreateAsync(Employee employee);
         Task<Employee> UpdateAsync(Employee employee);
         Task DeleteAsync(Employee employee);
+        Task<bool> IsManagerAnywhereAsync(int employeeId);
     }
 }

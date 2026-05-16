@@ -85,9 +85,6 @@ namespace OrganizacnaStrukturaFirmy.Service.implementation
             if (string.IsNullOrWhiteSpace(dto.Name))
                 throw new ArgumentException("Name is required.");
 
-            if (!dto.ManagerId.HasValue)
-                throw new ArgumentException("ManagerId is required when updating a company.");
-
             var company = await _companyRepository.GetByIdAsync(id);
             if (company == null)
                 throw new KeyNotFoundException($"Company with id {id} not found.");
@@ -95,12 +92,14 @@ namespace OrganizacnaStrukturaFirmy.Service.implementation
             if (await _companyRepository.CodeExistsAsync(dto.Code, id))
                 throw new ArgumentException($"Company with code '{dto.Code}' already exists.");
 
-            var manager = await _employeeRepository.GetByIdAsync(dto.ManagerId.Value);
-            if (manager == null)
-                throw new ArgumentException($"Employee with id {dto.ManagerId} not found.");
-
-            if (manager.CompanyId != id)
-                throw new ArgumentException("Manager must be an employee of this company.");
+            if (dto.ManagerId.HasValue)
+            {
+                var manager = await _employeeRepository.GetByIdAsync(dto.ManagerId.Value);
+                if (manager == null)
+                    throw new ArgumentException($"Employee with id {dto.ManagerId} not found.");
+                if (manager.CompanyId != id)
+                    throw new ArgumentException("Manager must be an employee of this company.");
+            }
 
             company.Code = dto.Code;
             company.Name = dto.Name;
@@ -121,6 +120,12 @@ namespace OrganizacnaStrukturaFirmy.Service.implementation
             var company = await _companyRepository.GetByIdAsync(id);
             if (company == null)
                 throw new KeyNotFoundException($"Company with id {id} not found.");
+
+            if (await _companyRepository.HasEmployeesAsync(id))
+                throw new InvalidOperationException("Cannot delete company that has employees.");
+
+            if (await _companyRepository.HasDivisionsAsync(id))
+                throw new InvalidOperationException("Cannot delete company that has divisions.");
 
             await _companyRepository.DeleteAsync(company);
         }

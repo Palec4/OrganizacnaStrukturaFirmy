@@ -10,5 +10,7 @@ namespace OrganizacnaStrukturaFirmy.Repository.Interface
         Task<Company> CreateAsync(Company company);
         Task<Company> UpdateAsync(Company company);
         Task DeleteAsync(Company company);
+        Task<bool> HasEmployeesAsync(int companyId);
+        Task<bool> HasDivisionsAsync(int companyId);
     }
 }

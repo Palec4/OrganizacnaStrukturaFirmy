@@ -1,4 +1,6 @@
-﻿USE OrgStructure;
+﻿CREATE DATABASE OrgStructure;
+GO
+USE OrgStructure;
 GO
 
 CREATE TABLE Employees (

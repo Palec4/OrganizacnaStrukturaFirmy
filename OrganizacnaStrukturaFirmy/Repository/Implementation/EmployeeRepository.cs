@@ -41,5 +41,10 @@ namespace OrganizacnaStrukturaFirmy.Repository.Implementation
             _context.Employees.Remove(employee);
             await _context.SaveChangesAsync();
         }
+        public async Task<bool> IsManagerAnywhereAsync(int employeeId)
+    => await _context.Companies.AnyAsync(c => c.ManagerId == employeeId) ||
+       await _context.Divisions.AnyAsync(d => d.ManagerId == employeeId) ||
+       await _context.Projects.AnyAsync(p => p.ManagerId == employeeId) ||
+       await _context.Departments.AnyAsync(d => d.ManagerId == employeeId);
     }
 }

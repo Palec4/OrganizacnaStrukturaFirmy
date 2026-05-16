@@ -83,9 +83,6 @@ namespace OrganizacnaStrukturaFirmy.Service.implementation
             if (string.IsNullOrWhiteSpace(dto.Name))
                 throw new ArgumentException("Name is required.");
 
-            if (!dto.ManagerId.HasValue)
-                throw new ArgumentException("ManagerId is required when updating a department.");
-
             var department = await _departmentRepository.GetByIdAsync(id);
             if (department == null)
                 throw new KeyNotFoundException($"Department with id {id} not found.");

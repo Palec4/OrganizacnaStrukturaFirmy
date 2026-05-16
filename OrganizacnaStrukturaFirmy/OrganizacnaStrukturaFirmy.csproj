@@ -15,6 +15,7 @@
     </PackageReference>
     <PackageReference Include="Scalar.AspNetCore" Version="2.14.11" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+    <PackageReference Include="TeaPie" Version="1.6.1" />
   </ItemGroup>
 
 </Project>

@@ -86,6 +86,10 @@ namespace OrganizacnaStrukturaFirmy.Controllers
             {
                 return NotFound(ex.Message);
             }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
 
         // GET: api/companies/5/employees

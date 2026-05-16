@@ -101,6 +101,9 @@ namespace OrganizacnaStrukturaFirmy.Service.implementation
             if (employee == null)
                 throw new KeyNotFoundException($"Employee with id {id} not found.");
 
+            if (await _employeeRepository.IsManagerAnywhereAsync(id))
+                throw new InvalidOperationException("Cannot delete employee who is a manager of a company, division, project or department.");
+
             await _employeeRepository.DeleteAsync(employee);
         }
 

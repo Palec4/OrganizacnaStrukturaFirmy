@@ -1,0 +1,177 @@
+﻿--- TESTCASE Create company
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateCompanyRequest
+POST {{ApiBaseUrl}}/api/companies
+Content-Type: application/json
+
+{
+  "code": "FIRM-TEAPIE-001",
+  "name": "Test Firma TeaPie"
+}
+--- TEST
+await tp.Test("Company should be created with generated id and correct values.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateCompanyRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    Equal("FIRM-TEAPIE-001", (string)responseJson.code);
+    Equal("Test Firma TeaPie", (string)responseJson.name);
+    tp.SetVariable("CompanyId", (long)responseJson.id);
+});
+--- END
+--- TESTCASE Create employee for company
+--- HTTP
+## TEST-EXPECT-STATUS: [201]
+## TEST-HAS-BODY
+# @name CreateEmployeeRequest
+POST {{ApiBaseUrl}}/api/employees
+Content-Type: application/json
+
+{
+  "companyId": {{CompanyId}},
+  "title": "Ing.",
+  "firstName": "Jan",
+  "lastName": "Novak",
+  "phone": "+421900123456",
+  "email": "jan.novak@firma.sk"
+}
+--- TEST
+await tp.Test("Employee should be created.", async () =>
+{
+    dynamic responseJson = await tp.Responses["CreateEmployeeRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    True(responseJson.id > 0);
+    tp.SetVariable("EmployeeId", (long)responseJson.id);
+});
+--- END
+--- TESTCASE Get all companies
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetAllCompaniesRequest
+GET {{ApiBaseUrl}}/api/companies
+--- TEST
+await tp.Test("Companies response should not be empty.", async () =>
+{
+    var responseText = await tp.Responses["GetAllCompaniesRequest"].Content.ReadAsStringAsync();
+    NotNull(responseText);
+    True(responseText.Length > 2);
+});
+--- END
+--- TESTCASE Get company by id
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetCompanyByIdRequest
+GET {{ApiBaseUrl}}/api/companies/{{CompanyId}}
+--- TEST
+await tp.Test("Returned company should match created company.", async () =>
+{
+    dynamic responseJson = await tp.Responses["GetCompanyByIdRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    Equal((long)tp.GetVariable<long>("CompanyId"), (long)responseJson.id);
+    Equal("Test Firma TeaPie", (string)responseJson.name);
+});
+--- END
+--- TESTCASE Update company
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name UpdateCompanyRequest
+PUT {{ApiBaseUrl}}/api/companies/{{CompanyId}}
+Content-Type: application/json
+
+{
+  "code": "FIRM-TEAPIE-001",
+  "name": "KROS Software s.r.o.",
+  "managerId": {{EmployeeId}}
+}
+--- TEST
+await tp.Test("Company should be updated.", async () =>
+{
+    dynamic responseJson = await tp.Responses["UpdateCompanyRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    Equal((long)tp.GetVariable<long>("CompanyId"), (long)responseJson.id);
+    Equal("KROS Software s.r.o.", (string)responseJson.name);
+});
+--- END
+--- TESTCASE Get updated company by id
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetUpdatedCompanyRequest
+GET {{ApiBaseUrl}}/api/companies/{{CompanyId}}
+--- TEST
+await tp.Test("Returned company should contain updated values.", async () =>
+{
+    dynamic responseJson = await tp.Responses["GetUpdatedCompanyRequest"].GetBodyAsExpandoAsync();
+    NotNull(responseJson);
+    Equal((long)tp.GetVariable<long>("CompanyId"), (long)responseJson.id);
+    Equal("KROS Software s.r.o.", (string)responseJson.name);
+});
+--- END
+--- TESTCASE Get company employees
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+## TEST-HAS-BODY
+# @name GetCompanyEmployeesRequest
+GET {{ApiBaseUrl}}/api/companies/{{CompanyId}}/employees
+--- TEST
+await tp.Test("Company employees should not be empty.", async () =>
+{
+    var responseText = await tp.Responses["GetCompanyEmployeesRequest"].Content.ReadAsStringAsync();
+    NotNull(responseText);
+    True(responseText.Length > 2);
+});
+--- END
+--- TESTCASE Create company without name should fail
+--- HTTP
+## TEST-EXPECT-STATUS: [400]
+# @name CreateCompanyWithoutNameRequest
+POST {{ApiBaseUrl}}/api/companies
+Content-Type: application/json
+
+{
+  "code": "FIRM-TEAPIE-002",
+  "name": ""
+}
+--- END
+--- TESTCASE Get non-existing company should return not found
+--- HTTP
+## TEST-EXPECT-STATUS: [404]
+# @name GetNonExistingCompanyRequest
+GET {{ApiBaseUrl}}/api/companies/999999
+--- END
+--- TESTCASE Remove manager from company
+--- HTTP
+## TEST-EXPECT-STATUS: [200]
+# @name RemoveManagerRequest
+PUT {{ApiBaseUrl}}/api/companies/{{CompanyId}}
+Content-Type: application/json
+
+{
+  "code": "FIRM-TEAPIE-001",
+  "name": "KROS Software s.r.o.",
+  "managerId": null
+}
+--- END
+--- TESTCASE Delete employee
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteEmployeeRequest
+DELETE {{ApiBaseUrl}}/api/employees/{{EmployeeId}}
+--- END
+--- TESTCASE Delete company
+--- HTTP
+## TEST-EXPECT-STATUS: [204]
+# @name DeleteCompanyRequest
+DELETE {{ApiBaseUrl}}/api/companies/{{CompanyId}}
+--- END
+--- TESTCASE Get deleted company should return not found
+--- HTTP
+## TEST-EXPECT-STATUS: [404]
+# @name GetDeletedCompanyRequest
+GET {{ApiBaseUrl}}/api/companies/{{CompanyId}}
+--- END

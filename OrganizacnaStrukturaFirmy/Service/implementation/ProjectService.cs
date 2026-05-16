@@ -82,9 +82,6 @@ namespace OrganizacnaStrukturaFirmy.Service.implementation
             if (string.IsNullOrWhiteSpace(dto.Name))
                 throw new ArgumentException("Name is required.");
 
-            if (!dto.ManagerId.HasValue)
-                throw new ArgumentException("ManagerId is required when updating a project.");
-
             var project = await _projectRepository.GetByIdAsync(id);
             if (project == null)
                 throw new KeyNotFoundException($"Project with id {id} not found.");
