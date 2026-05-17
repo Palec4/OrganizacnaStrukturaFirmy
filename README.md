@@ -19,8 +19,8 @@ cd OrganizacnaStrukturaFirmy
 
 ### 2. Vytvorenie databázy
 1. Otvorte SSMS a pripojte sa na `localhost\SQLEXPRESS`
-2. Otvorte súbor `Database/init.sql`
-3. Spustite skript cez **F5** alebo **Execute**
+2. Otvorte súbor `init.sql`
+4. Spustite skript cez **F5** alebo **Execute**
 
 ### 3. Nastavenie connection stringu
 V súbore `appsettings.json` skontrolujte connection string:
@@ -59,7 +59,7 @@ teapie test Tests/001-Companies.tp -e local --env-file Tests/env.json
 
 Projekt používa vrstvovú architektúru:
 - **Controllers** - prijímajú HTTP requesty a vracajú odpovede
-- **Services** - business logika a validácie
-- **Repositories** - komunikácia s databázou
+- **Service** - business logika a validácie
+- **Repository** - komunikácia s databázou
 - **DTOs** - objekty pre prenos dát medzi vrstvami
 - **Models** - databázové entity
